@@ -1,0 +1,59 @@
+<HTML>
+<HEAD>
+<TITLE>Femtosoft Technologies, LLC - Fractal Imaging Software</TITLE>
+</HEAD>
+
+<BODY BGCOLOR="#FFFFFF">
+<P ALIGN=Center>
+<IMG SRC="../fsoft.gif" ALT="Femtosoft Technologies, LLC" WIDTH=531 HEIGHT=211>
+
+<H1>Fractal Image Compression Software</H1>
+The use of fractals to generate and compress images has always fascinated me since I heard about the field over 10 years ago.  Unfortunately, I could never really understand how it was done. Recently Ning Lu, the chief scientist at <A HREF="http://www.iterated.com">Iterated Systems</A> (where the fractal image compression techniques were developed)(NOTE: as of May 2005, that link takes me somewhere else.  Perhaps Iterated Systems is no more), wrote a book called "<A HREF="http://www.amazon.com/exec/obidos/tg/detail/-/0124580106/qid=1116053923/sr=1-1/ref=sr_1_1/103-9243869-7119815?v=glance&s=books">Fractal Imaging</A>," where these techniques are explained in detail.  
+
+<P>I decided to write the simplest version of their fractal image compressor into Java, just for fun. It's the version in Chap. 3 of the book. This is nowhere near good enough for commercial use, it is mainly meant to explore the methods (the code in Dr. Lu's book is quite clever, but a bit difficult to decipher at first glance).  Feel free to download the code, have fun with it, tell me if you liked it.
+
+<P>The fractal compression algorithm divides the image into regions, which I called panels.  For each panel, the algorithm finds the optimum set of fractal codes to encode that panel.  The panel size is selectable, but beware - execution time increases <I>greatly</I> with decreasing panel size.  However, the decompressed image quality will increase as the panel size decreases.  When the algorithm finishes compressing the image, it will prompt you for a filename to save the resulting fractal image model (the set of fractal codes that design the image).  Be sure to save the file so that you don't have to go through it again!
+
+<P>The fractal compression scheme is based on self-similarity: the fractal code for a given image region tells which part of the image, when constracted, rotated, flipped, skewed, and contrast-modified, looks the most like the destination region.  So the image gets encoded in terms of itself.  It's really remarkable (remarkable that you can actually <I>uncode</I> it!).
+
+<P>One limitation of my code is that although you can load color images, the compressed image will be monochrome.  I average the RGB pixels to get grey, so your image might look funny.  Here are two images that you can use.  The first is a photo of Michelle Yeoh, a Hong Kong action movie star, who played in "Heroic Trio," "Supercop," "Never Say Die," and "Wing Chun," among many others.  Also, try Xie Miao, shown here in a scene from "My Father is a Hero" with Jet Li, one of China's greatest wushu masters.
+
+<P><CENTER>
+<TABLE BORDER=>
+<TR>
+<TD>michelle.gif</TD>
+<TD>xiemiao2.gif</TD>
+</TR>
+<TR>
+<TD><IMG SRC="Michelle.gif" WIDTH=154 HEIGHT=184 ALIGN=Left BORDER=5></TD>
+<TD><IMG SRC="xiemiao2.gif" WIDTH=200 HEIGHT=295 ALIGN=Left BORDER=5></TD>
+</TR>
+</TABLE>
+</CENTER>
+
+<P>When decompressing (expanding) an image, select the filename of the fractal image model you want to decompress.  One of the remarkable things is that the fractal compression is <I>resolution independent</I> - you can decompress the image at any resolution you like!  I provided a choice box to select the pane size to use to expand the image.  Even when you blow up the image to a larger size, you don't get the "jaggies."  This is really remarkable! The image expansion process is iterative, and I let it run 12 times, so you can watch the image come into focus.
+
+<P>I've been able to achieve compression on the order of a gif or jpg file. The storage mechanism for the Java and Delphi compressed images is different (in Java I used the built-in object serialization, in Delphi I wrote directly to a file). The way I wrote the codes to the disk in the Delphi version is quite wasteful, resulting in big files. There's no need for this, I just didn't get around to fixing it.
+
+<P>The Java version reads in PNGs, BMPs, and JPGs, while the Delphi version needs bmps.  You'll get the best compression ratios with BMPs, of course, since JPG and PNG are already compressed.  For large images (if you are patient enough to wait) you might want to increase memory with a -XMx300M or something like that when you run java.
+
+<P>Here are the resources available (you may need to right-click to download some of them):
+<UL>
+  <LI><A HREF="JavaFractalProject.zip">Java project</A>, updated (FINALLY!) in May 2005.  This was done in <A HREF="http://www.eclipse.org">Eclipse</A> 3, using <A HREF="http://java.sun.com">JDK</A> 1.4.2.  There's an <A HREF="http://ant.apache.org">Ant</A> 1.6.2 build file there.  The compiled program is in the dist directory.  You can run it with "java -jar fractal.jar".  Just run "ant" from the project root dir to execute the build script. I finally updated this (5/05) to remove the dependencies on proprietary Borland classes.  It's now Pure Java.
+  <LI><A HREF="delphifractal.zip">Delphi source code.</A>
+  <LI><A HREF="fractalexe.zip">Delphi executable</A> (Don't need a JDK for this, and also it's faster).
+  <LI><A HREF="thebmps.zip">michelle.bmp and xiemiao2.bmp</A>
+</UL>
+
+<P>If you enjoy playing with this, or even if you don't, let me know!  Especially if you modify the Java code, I could include it here so that others can share your mods.  Maybe we should start an open source project?  Fractal image compression is really a fascinating field, and I hope more people can learn about it!  - Ken DeLong  <IMG SRC="../email.gif" WIDTH=142 HEIGHT=22>.
+
+<H2>Thoughts on Delphi vs. Java</H2>
+My experience is that Java is a real pleasure to program in for the core classes.  Building the GUI was a bit of a pain.  Delphi, on the other hand, builds GUIs with ease.  Delphi's properties eliminate the need for lot's of getThis() and setThat() syntax, which I dislike.  Delphi's syntax overall is a lot more wordy, but the compiler and executables are lightning fast. In truth, Java performs well - only about 2.5 times slower than the Delphi exe (NOTE: this was in 1998, probably JDK 1.2; the times have changed!!!) - and that's a <I>lot</I> faster than VB!  Also, Delphi doesn't have garbage collection, which is a real pain, and it doesn't handle multithreading with nearly the same grace and power that Java does. And one still has to worry about circular references. But let's face it, Delphi beats the *beep* out of C++.  PS, this was all done in 1998.  Java's a lot faster now.  Someday I'll run it on a modern JVM. . .
+</HEAD>
+
+<HR>
+<H4><A HREF="../index.html">Back to the Femtosoft Homepage.</A></H4>
+
+</BODY>
+
+</HTML>
