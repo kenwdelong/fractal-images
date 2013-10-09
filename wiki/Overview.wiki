@@ -34,5 +34,4 @@ Here are the resources available (you may need to right-click to download some o
 			
 
 Fractal image compression is really a fascinating field, and I hope more people can learn about it!  
-- Ken DeLong
-
+- Ken DeLong  (kenwdelong at gee-mail dotcom)
