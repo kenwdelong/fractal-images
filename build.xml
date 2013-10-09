@@ -1,0 +1,100 @@
+<project name="Fractals" default="all" basedir=".">
+
+	<property environment="env" />
+	<property name="dist" value="dist"/>
+	<property name="staging" value="./staging"/>
+	<property name="batch" value="./batch"/>
+	<property name="doc" value="doc"/>
+	<property name="build" value="./build"/>
+	<property name="source" value="./src"/>		
+	<property name="images" value="./images"/>
+	<property name="reports.dir" value="reports"/>		
+	<property name="reports" value="${reports.dir}/junit"/>		
+	<property name="reports_html" value="${reports}/html"/>		
+	<property name="jar_name" value="fractal.jar"/>
+	<property name="lib.dir" value="./lib"/>
+	<property name="junit_jar" value="${lib}/junit.jar"/>
+	
+	<path id="cp">
+		<fileset dir="${lib.dir}">
+			<include name="**/*.jar"/>
+		</fileset>
+	</path>
+	
+	<target name="setProps">
+		<tstamp/>
+	</target>	
+
+	<target name="clean" depends="setProps">
+		<delete dir="${dist}"/>
+		<delete dir="${build}"/>
+	</target>	
+
+	<target name="prepare" depends="setProps">
+		<mkdir dir="${dist}"/>
+		<mkdir dir="${build}"/>
+	</target>
+	
+	<target name="compile" depends="prepare">
+		<javac srcdir="${source}" destdir="${build}" compiler="javac1.4" source="1.4">		
+			<classpath refid="cp"/>
+		</javac>
+		<copy todir="${build}">
+			<fileset dir="${source}" excludes="**/*.java" />
+		</copy>
+	</target>
+	
+	<target name="package" depends="compile">
+		<jar jarfile="${dist}/${jar_name}" basedir="${build}" excludes="**/*Test.class">
+			<manifest >
+				<attribute name="Class-Path" value="hey"/>
+				<attribute name="Main-Class" value="biz.femtosoft.fractal.FractalMain"/>
+			</manifest>
+		</jar>
+			</target>
+	
+	<target name="test" depends="setProps">
+		<delete dir="${reports}"/>
+		<mkdir dir="${reports}"/>
+		<junit fork="yes" printsummary="yes" reloading="true" dir=".">
+			<formatter type="plain" usefile="false"/>
+			<formatter type="xml" usefile="true"/>
+			<batchtest todir="${reports}">
+                <fileset dir="${build}" includes="**/*Test.class" />
+            </batchtest>
+			<classpath>
+				<path refid="cp"/>
+				<pathelement path="${build}"/>
+			</classpath>
+		</junit>
+	</target>
+
+	<target name="viewTestsLocal" depends="setProps">		
+		<mkdir dir="${reports_html}"/>
+		<junitreport todir="${reports_html}">
+			<fileset dir="${reports}">
+				<include name="TEST-*.xml"/>
+			</fileset>
+			<report format="frames" todir="${reports_html}"/>
+		</junitreport>
+		
+		<exec executable="iexplore" vmlauncher="false" dir="${env.SystemDrive}/Program Files/Internet Explorer" os="Windows 2000,Windows XP">
+			<arg value="file:///${basedir}/${reports_html}/index.html"/>
+		</exec>		
+	</target>
+	
+	<target name="run" depends="package">
+		<java jar="${dist}/${jar_name}" fork="true" />
+	</target>
+	
+	<target name="doc">
+		<delete dir="${doc}"/>
+		<mkdir dir="${doc}"/>
+		<javadoc sourcepath="${source}" destdir="${doc}" packagenames="biz.femtosoft.fractal.*"/>
+	</target>
+		
+	<target name="all" depends="clean,compile,package,test,viewTestsLocal"/>
+	<target name="testOnly" depends="test,viewTestsLocal"/>
+
+
+</project>

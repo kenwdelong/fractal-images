@@ -1,0 +1,330 @@
+import java.awt.*;
+import java.awt.event.*;
+
+import biz.femtosoft.fractal.*;
+import biz.femtosoft.fractal.domain.DestinationImage;
+import biz.femtosoft.fractal.domain.FractalCompressor;
+import biz.femtosoft.fractal.domain.FractalImageModel;
+import borland.jbcl.control.*;
+import borland.jbcl.layout.*;
+
+public class MainAppFrame extends DecoratedFrame {
+  BorderLayout borderLayout1 = new BorderLayout();
+  XYLayout xYLayout2 = new XYLayout();
+  BevelPanel bevelPanel1 = new BevelPanel();
+	Button cmdSelectFile = new Button();
+  Button cmdCompress = new Button();
+  Label lblImageSize = new Label();
+	Filer filer1 = new Filer();
+	Thread compressorThread;
+	CheckerThread checker;
+	DecompressorThread decompressorThread;
+	frmDestImage aFrmDestImage;
+  Label lblPercentDone = new Label();
+  Button cmdCancel = new Button();
+  Button cmdExpand = new Button();
+	FractalCompressor fractalCompressor;
+  Label lblExpImageSize = new Label();
+  Label lblReconIters = new Label();
+  Label lblTime = new Label();
+  Choice chcExpand = new Choice();
+  Label lblExpandPanelSize = new Label();
+  Choice chcCompress = new Choice();
+  Label lblCompressPanelSize = new Label();
+
+  //Construct the frame
+  public MainAppFrame() {
+    try {
+      jbInit();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  //Component initialization
+  private void jbInit() throws Exception{
+		this.setLayout(borderLayout1);
+    this.setSize(new Dimension(512, 314));
+    this.setTitle("Fractal Image Explorer");
+    cmdSelectFile.setLabel("Select Image File");
+    cmdSelectFile.addActionListener(new MainAppFrame_cmdSelectFile_actionAdapter(this));
+    cmdCompress.setLabel("Compress Image");
+    cmdCompress.addActionListener(new MainAppFrame_cmdCompress_actionAdapter(this));
+    lblImageSize.setText("Image Size:");
+		filer1.setFrame(this);
+		lblPercentDone.setText("Percent Done:");
+    cmdCancel.setLabel("Cancel Compression");
+    cmdExpand.setLabel("Expand Image");
+    lblExpImageSize.setText("ImageSize:");
+    lblReconIters.setText("Reconstruction Iterations");
+		lblTime.setText("Time Remaining:");
+    lblExpandPanelSize.setText("Expansion Panel Size");
+    lblCompressPanelSize.setText("Compression Panel Size");
+    cmdExpand.addActionListener(new MainAppFrame_cmdExpand_actionAdapter(this));
+    cmdCancel.addActionListener(new MainAppFrame_cmdCancel_actionAdapter(this));
+    bevelPanel1.setLayout(xYLayout2);
+    this.add(bevelPanel1, BorderLayout.CENTER);
+    bevelPanel1.add(cmdSelectFile, new XYConstraints(20, 45, -1, -1));
+    bevelPanel1.add(cmdCompress, new XYConstraints(21, 176, -1, -1));
+    bevelPanel1.add(lblImageSize, new XYConstraints(22, 80, 139, -1));
+    bevelPanel1.add(lblPercentDone, new XYConstraints(176, 200, 119, -1));
+    bevelPanel1.add(cmdCancel, new XYConstraints(173, 227, -1, -1));
+    bevelPanel1.add(cmdExpand, new XYConstraints(324, 110, 107, -1));
+    bevelPanel1.add(lblExpImageSize, new XYConstraints(325, 165, 124, -1));
+    bevelPanel1.add(lblReconIters, new XYConstraints(326, 190, 166, -1));
+    bevelPanel1.add(lblTime, new XYConstraints(175, 252, 203, -1));
+    bevelPanel1.add(chcExpand, new XYConstraints(325, 78, 109, -1));
+    bevelPanel1.add(lblExpandPanelSize, new XYConstraints(322, 51, -1, -1));
+    bevelPanel1.add(chcCompress, new XYConstraints(19, 145, 112, -1));
+    bevelPanel1.add(lblCompressPanelSize, new XYConstraints(22, 117, -1, -1));
+		chcExpand.addItem("2");
+		chcExpand.addItem("3");
+		chcExpand.addItem("4");
+		chcExpand.addItem("5");
+		chcExpand.addItem("6");
+		chcExpand.addItem("8");
+		chcExpand.select("5");
+		chcCompress.addItem("2");
+		chcCompress.addItem("3");
+		chcCompress.addItem("4");
+		chcCompress.addItem("5");
+		chcCompress.addItem("6");
+		chcCompress.addItem("8");
+		chcCompress.select("5");
+	}
+
+  void cmdSelectFile_actionPerformed(ActionEvent e) {
+		filer1.show();
+		if(filer1.getFile() != null) {
+		try {
+			aFrmDestImage = new frmDestImage();
+			aFrmDestImage.imgDestImage.setImageName(filer1.getFile());
+			borland.jbcl.util.ImageLoader.load(filer1.getFile(), aFrmDestImage.imgDestImage, true);
+			int width = aFrmDestImage.imgDestImage.getImage().getWidth(aFrmDestImage.imgDestImage);
+			int height = aFrmDestImage.imgDestImage.getImage().getHeight(aFrmDestImage.imgDestImage);
+			aFrmDestImage.imgDestImage.setSize(width + 10, height + 10);
+			lblImageSize.setText("Image Size: " + width + " X " + height);
+			aFrmDestImage.show();
+		} catch(Exception ex) {
+				Message msg = new Message();
+				msg.setMessage("Error: " + ex);
+				msg.setButtonSet(Message.OK);
+				msg.show();
+		}
+		}
+	}
+
+	void cmdCompress_actionPerformed(ActionEvent e) {
+		// This is the method that starts the compression.
+		fractalCompressor = new FractalCompressor();
+		DestinationImage destImage;
+		try {
+			destImage = new DestinationImage(aFrmDestImage.imgDestImage.getImage());
+		} catch (Exception ex) {
+			Message msg = new Message(this, "Error", "Error getting the dest image." + ex);
+			msg.setButtonSet(Message.OK);
+			msg.show();
+			return;
+		}
+		fractalCompressor.setDestImage(destImage);
+		int panelSize = Integer.parseInt(chcCompress.getSelectedItem(), 10);
+		fractalCompressor.setPanelSize(panelSize);
+
+		// Run the compressor in its own thread.
+		if(compressorThread != null) compressorThread.stop();
+		compressorThread = new Thread(fractalCompressor);
+		compressorThread.start();
+
+		// Start the thread to check the progress of the compressor.
+		if(checker != null) checker.stop();
+		checker = new CheckerThread(fractalCompressor, this);
+		checker.start();
+  }
+
+	void cmdCancel_actionPerformed(ActionEvent e) {
+		// To stop the compression, kill the thread that checks the
+		// progress and the actual compressor.
+		if (checker != null) {
+			checker.stop();
+			checker = null;
+		}
+		if(compressorThread != null) {
+			compressorThread.stop();
+			compressorThread = null;
+		}
+	}
+
+	void cmdExpand_actionPerformed(ActionEvent e) {
+		decompressorThread = new DecompressorThread(this);
+		decompressorThread.start();
+	}
+}
+
+class MainAppFrame_cmdSelectFile_actionAdapter implements java.awt.event.ActionListener{
+	MainAppFrame adaptee;
+
+	MainAppFrame_cmdSelectFile_actionAdapter(MainAppFrame adaptee) {
+		this.adaptee = adaptee;
+	}
+
+	public void actionPerformed(ActionEvent e) {
+		adaptee.cmdSelectFile_actionPerformed(e);
+	}
+}
+
+class MainAppFrame_cmdCompress_actionAdapter implements java.awt.event.ActionListener{
+  MainAppFrame adaptee;
+
+  MainAppFrame_cmdCompress_actionAdapter(MainAppFrame adaptee) {
+    this.adaptee = adaptee;
+  }
+
+	public void actionPerformed(ActionEvent e) {
+    adaptee.cmdCompress_actionPerformed(e);
+  }
+}
+
+class CheckerThread extends Thread {
+	private FractalCompressor mFractalCompressor;
+	private MainAppFrame mMainAppFrame;
+
+	CheckerThread(FractalCompressor fractalCompressor, MainAppFrame frame) {
+		mFractalCompressor = fractalCompressor;
+		mMainAppFrame = frame;
+	}
+
+	public void run() {
+		double percentDone;
+		java.util.Date startTime, nowTime;
+		long elapsedTime, minutes, seconds, projectedTime;
+
+		startTime = new java.util.Date();
+		do {
+			// Now wait a while
+			try {
+				this.sleep(5000);
+			} catch(InterruptedException e) {}
+
+			percentDone = mFractalCompressor.getPercentDone();
+			mMainAppFrame.lblPercentDone.setText("Percent Done: " + new Double(percentDone).toString());
+			if(percentDone != 0.0) {
+				nowTime = new java.util.Date();
+				elapsedTime = (nowTime.getTime() - startTime.getTime())/1000;
+				projectedTime = (long)((100/percentDone - 1)*elapsedTime);
+				minutes = (long)(projectedTime/60);
+				seconds = (projectedTime - minutes*60);
+				mMainAppFrame.lblTime.setText("Time Remaining: " + minutes + " min " + seconds + " sec.");
+			}
+		} while(mFractalCompressor.compressorRunning());
+
+		// If we get here, that means the compressor finished normally.
+		// Make the display nice
+		//mMainAppFrame.lblPercentDone.setText("Percent Done: 100.0");
+		//mMainAppFrame.lblTime.setText("Time Remaining: " + minutes + " min " + seconds + " sec.");
+
+		// Now save the image model.
+		mMainAppFrame.filer1.setMode(Filer.SAVE);
+		mMainAppFrame.filer1.setTitle("Select filename for fractal image model.");
+		mMainAppFrame.filer1.show();
+		if(mMainAppFrame.filer1.getFile() == null) return;
+		FractalImageModel imageModel = mFractalCompressor.getFractalImageModel();
+		try {
+			java.io.FileOutputStream fileOut = new java.io.FileOutputStream(mMainAppFrame.filer1.getFile());
+			java.io.ObjectOutputStream out = new java.io.ObjectOutputStream(fileOut);
+			out.writeObject(imageModel);
+			out.close();
+		} catch(java.io.IOException ioe) {
+			 (new Message(mMainAppFrame, "Error", ioe.toString())).show();
+		}
+	}
+}
+
+class DecompressorThread extends Thread {
+	private MainAppFrame mf;
+
+	DecompressorThread(MainAppFrame pMF) {
+		mf = pMF;
+	}
+
+	public void run() {
+		// This has to run in its own thread, because the screen won't
+		// update unless we release the event handler thread for the
+		// Expand button.
+		mf.cmdExpand.setEnabled(false);
+		FrmExpandedImage frmExpandedImage = new FrmExpandedImage();
+		frmExpandedImage.show();
+
+		// Get the fractal image model
+		mf.filer1.setMode(Filer.LOAD);
+		mf.filer1.setTitle("Select image file to load.");
+		mf.filer1.show();
+		if(mf.filer1.getFile() == null) return;
+		FractalImageModel imageModel;
+		try {
+			java.io.FileInputStream fileIn = new java.io.FileInputStream(mf.filer1.getFile());
+			java.io.ObjectInputStream in = new java.io.ObjectInputStream(fileIn);
+			imageModel = (FractalImageModel)in.readObject();
+		} catch(Exception ioe) {
+			 (new Message(mf, "Error", ioe.toString())).show();
+			 return;
+		}
+
+		// Parameters for image reconstruction
+		int panelSize = Integer.parseInt(mf.chcExpand.getSelectedItem(), 10);
+		int width = imageModel.getXPanels()*panelSize;
+		int height = imageModel.getYPanels()*panelSize;
+
+		// Create default images
+		DestinationImage expandedImage = new DestinationImage(width, height);
+		try {
+			frmExpandedImage.imgExpImage.setImage(expandedImage.getImage(mf));
+		} catch(java.io.IOException ioe) {
+			(new Message(mf, "Error", ioe.toString())).show();
+		}
+		frmExpandedImage.imgExpImage.repaint();
+		width = frmExpandedImage.imgExpImage.getImage().getWidth(frmExpandedImage.imgExpImage);
+		height = frmExpandedImage.imgExpImage.getImage().getHeight(frmExpandedImage.imgExpImage);
+		mf.lblExpImageSize.setText("Image Size: " + width + " X " + height);
+
+		// Do the decompression cycle
+		FractalDecompressor fractalDecompressor = new FractalDecompressor();
+		for(int i = 0; i < 12; i++) {
+			fractalDecompressor.getNextImage(imageModel, expandedImage, panelSize);
+			try {
+				frmExpandedImage.imgExpImage.setImage(expandedImage.getImage(mf));
+			} catch(java.io.IOException ioe) {
+				(new Message(mf, "Error", ioe.toString())).show();
+			}
+			mf.lblReconIters.setText("Reconstruction Iterations: " + (i+1));
+			try {
+				Thread.currentThread().sleep(1000);
+			} catch(InterruptedException ie) {}
+		}
+		mf.cmdExpand.setEnabled(true);
+	}
+}
+
+class MainAppFrame_cmdCancel_actionAdapter implements java.awt.event.ActionListener{
+  MainAppFrame adaptee;
+
+  MainAppFrame_cmdCancel_actionAdapter(MainAppFrame adaptee) {
+    this.adaptee = adaptee;
+	}
+
+  public void actionPerformed(ActionEvent e) {
+    adaptee.cmdCancel_actionPerformed(e);
+	}
+}
+
+class MainAppFrame_cmdExpand_actionAdapter implements java.awt.event.ActionListener{
+  MainAppFrame adaptee;
+
+  MainAppFrame_cmdExpand_actionAdapter(MainAppFrame adaptee) {
+    this.adaptee = adaptee;
+  }
+
+  public void actionPerformed(ActionEvent e) {
+		adaptee.cmdExpand_actionPerformed(e);
+  }
+}
