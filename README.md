@@ -1,6 +1,6 @@
 #Introduction
 The [use of fractals to generate and compress images](http://en.wikipedia.org/wiki/Fractal_compression) has always fascinated me 
-since I heard about the field over 10 years ago. There is a book by Ning Lu,"[Fractal Imaging]9http://www.amazon.com/exec/obidos/tg/detail/-/0124580106/qid=1116053923/sr=1-1/ref=sr_1_1/103-9243869-7119815?v=glance&amp;s=books)," where these techniques are 
+since I heard about the field over 10 years ago. There is a book by Ning Lu,"[Fractal Imaging](http://www.amazon.com/exec/obidos/tg/detail/-/0124580106/qid=1116053923/sr=1-1/ref=sr_1_1/103-9243869-7119815?v=glance&amp;s=books)," where these techniques are 
 explained in detail. Ning Lu was	the chief scientist at Iterated Systems, where the fractal image compression techniques 
 were developed under [Michael Barnsley](http://en.wikipedia.org/wiki/Michael_Barnsley)'s leadership.
 
